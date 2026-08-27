@@ -1,0 +1,18 @@
+# Node / Frontend
+node_modules/
+dist/
+build/
+.next/
+
+# .NET / Backend
+bin/
+obj/
+
+# Environment Variables
+.env
+.env.local
+.env.*.local
+
+# OS Files
+.DS_Store
+Thumbs.db
