@@ -1,43 +1,22 @@
-# Menu OCR Engine - Option-C
+# Menu - Digital Restaurant Menu Platform
 
-A full-stack restaurant menu management platform built around a **manual JSON OCR workflow**. Users extract menu data from images using an AI tool (e.g. Kimi), paste the resulting JSON into the app, and the backend validates, deduplicates, and persists it into a structured database, ultimately powering a live customer-facing digital menu with QR code access, table ordering, and real-time kitchen/waiter alerts.
+A full-stack platform for creating, managing, and serving digital menus for restaurants. Customers scan a QR code, browse the menu on their phone, and staff manage everything through a role-based dashboard.
 
 ---
 
 ## Features
 
-### Menu OCR Pipeline
-
-- **JSON paste workflow** - paste AI-extracted menu JSON; backend validates structure and content
-- **Deduplication engine** - prevents duplicate menu items across paste operations
-- **Image normalization funnel** - 3-phase image pipeline (Phase 1 -> 2 -> 3) for standardising food item images
-- **Suggestor service** - food item name suggestions during OCR review
-- **Validation error reports** - structured error feedback with actionable messages
-
-### Multi-Tenant Restaurant Management
-
-- **SuperAdmin** - manages all restaurants, runs OCR ingestion, assigns RestroAdmins
-- **RestroAdmin** - manages their restaurant's menu via Menu Studio (drag-and-drop editor)
-- **Menu Studio** - full drag-and-drop menu editor with category/subcategory/item management
-- **QR Code generation** - each restaurant gets a unique QR code that links to its digital menu
-
-### Customer-Facing Digital Menu
-
-- Responsive digital menu at `/restaurant/:id/menu`
-- Browse categories, subcategories, and items with images and prices
-- **Table ordering** - customers scan a table QR, browse the menu, and place orders directly
-
-### Kitchen and Front-of-House
-
-- **Chef dashboard** - real-time incoming order queue with status updates
-- **Waiter dashboard** - manages tables, sees alerts, handles order workflow
-- **Real-time alerts** - Redis pub/sub powers instant waiter call and order notifications
-
-### Authentication and Authorisation
-
-- JWT-based authentication
-- Role-based access control: `SuperAdmin`, `RestroAdmin`, `Chef`, `Waiter`
-- Protected routes on both frontend and backend
+| Feature | Description |
+|---|---|
+| Customer Menu | Mobile-friendly menu page, accessible via QR code (`/restaurant/:id/menu`) |
+| Role-Based Auth | JWT-secured roles: `SuperAdmin`, `RestroAdmin`, `Chef`, `Waiter` |
+| Menu Studio | Drag-and-drop menu editor for categories and items |
+| OCR Ingestion | Paste AI-extracted JSON (e.g., from Kimi) -> backend validates and saves |
+| Admin Dashboard | Super-admin overview of all restaurants |
+| Chef and Waiter Views | Role-specific dashboards for kitchen and front-of-house staff |
+| Image Storage | S3-compatible storage via Supabase |
+| Redis Caching | Distributed cache + pub/sub alerts |
+| QR Code Generation | Per-restaurant QR codes generated in-app |
 
 ---
 
@@ -45,81 +24,34 @@ A full-stack restaurant menu management platform built around a **manual JSON OC
 
 ```
 Menu/
-├── backend/        # ASP.NET Core 8 Web API
-└── frontend/       # React 19 + Vite SPA
+├── frontend/      # React 19 + Vite + TypeScript + Tailwind CSS
+└── backend/       # ASP.NET Core (.NET) + PostgreSQL + Redis
 ```
 
-### Backend - ASP.NET Core 8
+### Frontend Stack
 
-| Layer | Tech |
-|---|---|
-| Framework | ASP.NET Core 8 (.NET 8) |
-| Database | PostgreSQL via EF Core + Npgsql |
-| Cache | Redis (StackExchange.Redis) |
-| Auth | JWT Bearer |
-| Validation | FluentValidation |
-| Storage | AWS S3-compatible (Supabase Storage) |
-| Logging | Serilog |
-| API Docs | Swagger / OpenAPI |
-| Password Hashing | BCrypt.Net |
+- **React 19** with **TypeScript**
+- **Vite** as the build tool
+- **Tailwind CSS** for styling
+- **React Router v6** for navigation
+- **TanStack Query** for server state
+- **Zustand + Immer + Zundo** for local state + undo history
+- **Framer Motion** for page transitions and animations
+- **@dnd-kit** for drag-and-drop menu editing
+- **Lucide React** for icons
+- **Sonner** for toast notifications
+- **html5-qrcode / qr-code-styling** for QR scanning and generation
 
-### Frontend - React 19 + Vite
+### Backend Stack
 
-| Layer | Tech |
-|---|---|
-| Framework | React 19 + TypeScript |
-| Build Tool | Vite 8 |
-| Styling | TailwindCSS 3 |
-| Routing | React Router DOM v6 |
-| State | Zustand + Immer + Zundo (undo/redo) |
-| Data Fetching | TanStack Query v5 |
-| Drag and Drop | dnd-kit |
-| Animations | Framer Motion |
-| QR Codes | react-qr-code + qr-code-styling |
-| Image Export | html-to-image |
-| Icons | Lucide React |
-| Toasts | Sonner |
-| HTTP | Axios |
-
----
-
-## API Endpoints (Summary)
-
-| Controller | Base Route | Description |
-|---|---|---|
-| `AuthController` | `/api/auth` | Login, token management |
-| `AdminController` | `/api/admin` | SuperAdmin - restaurants, users |
-| `RestroAdminController` | `/api/restro-admin` | RestroAdmin - their own restaurant |
-| `MenuOcrController` | `/api/menu-ocr` | OCR paste, validate, save, review |
-| `OrdersController` | `/api/orders` | Customer orders, status updates |
-| `SessionsController` | `/api/sessions` | Table sessions and QR scan flow |
-| `AlertsController` | `/api/alerts` | Waiter alerts via SSE / Redis |
-| `Phase1ImageController` | `/api/phase1` | Image funnel - Phase 1 |
-| `Phase2ImageController` | `/api/phase2` | Image funnel - Phase 2 |
-| `Phase3ImageController` | `/api/phase3` | Image funnel - Phase 3 (CRUD + aliases) |
-| `NormalizeImageController` | `/api/normalize` | Trigger normalization engine |
-| `SuggestorController` | `/api/suggestor` | Food item name suggestions |
-| `UnmatchedLogController` | `/api/unmatched` | Logs of unmatched OCR items |
-
-Interactive docs available at **`/swagger`** when running in Development mode.
-
----
-
-## Frontend Routes
-
-| Route | Role | Description |
-|---|---|---|
-| `/login` | Public | Login page |
-| `/restaurant/:id/menu` | Public | Customer-facing digital menu |
-| `/admin` | SuperAdmin | Admin dashboard |
-| `/restro-admin` | RestroAdmin | Restaurant dashboard |
-| `/restaurant/:id/manage` | RestroAdmin, SuperAdmin | Menu Studio (drag-and-drop editor) |
-| `/restro-admin/ocr` | SuperAdmin | OCR pipeline dashboard |
-| `/restaurant/:id/category/:name` | SuperAdmin | JSON paste screen for a category |
-| `/restaurant/:id/edit/:categoryId` | SuperAdmin | Editor screen for a specific category |
-| `/restaurant/:id/review` | SuperAdmin | Full-menu review before publishing |
-| `/chef` | Chef | Kitchen order queue |
-| `/waiter` | Waiter | Table and order management |
+- **ASP.NET Core** Web API
+- **Entity Framework Core** with **PostgreSQL** (via Npgsql)
+- **JWT Bearer Authentication**
+- **FluentValidation** for request validation
+- **Redis** (StackExchange.Redis) for caching and pub/sub
+- **Serilog** for structured logging
+- **Supabase S3** for image storage
+- **Swagger / OpenAPI** for API documentation
 
 ---
 
@@ -127,139 +59,161 @@ Interactive docs available at **`/swagger`** when running in Development mode.
 
 ### Prerequisites
 
-- [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8)
-- [Node.js 20+](https://nodejs.org/)
-- [PostgreSQL](https://www.postgresql.org/)
-- [Redis](https://redis.io/) (local or remote)
+- [Node.js](https://nodejs.org/) >= 18
+- [.NET SDK](https://dotnet.microsoft.com/) >= 8
+- [PostgreSQL](https://www.postgresql.org/) running locally or via a cloud provider
+- [Redis](https://redis.io/) running locally or via a cloud provider
 
-### Backend Setup
+---
+
+### 1. Clone the repo
+
+```bash
+git clone <repo-url>
+cd Menu
+```
+
+---
+
+### 2. Backend Setup
 
 ```bash
 cd backend
 ```
 
-1. **Configure settings** - copy the example config and fill in your values:
-   ```bash
-   cp appsettings.Example.json appsettings.json
-   ```
-   Edit `appsettings.json`:
-   ```json
-   {
-     "ConnectionStrings": {
-       "DefaultConnection": "Host=YOUR_HOST;Port=5432;Database=postgres;Username=YOUR_USER;Password=YOUR_PASSWORD"
-     },
-     "Jwt": {
-       "Secret": "REPLACE_WITH_A_RANDOM_STRING_AT_LEAST_32_CHARS_LONG"
-     },
-     "Seed": {
-       "SuperAdminPassword": "REPLACE_IN_PRODUCTION"
-     },
-     "Redis": {
-       "ConnectionString": "localhost:6379",
-       "InstanceName": "optionc:"
-     }
-   }
-   ```
-
-   > **Tip:** Use `dotnet user-secrets` to avoid committing secrets:
-   > ```bash
-   > dotnet user-secrets set "Jwt:Secret" "your_secret_here"
-   > ```
-
-2. **Run the API** - migrations and seeding happen automatically on startup:
-   ```bash
-   dotnet run
-   ```
-   The API will be available at `http://localhost:5010` (or the port shown in the console).
-   Swagger UI: `http://localhost:5010/swagger`
-
-3. **Manual migration** (if auto-migration fails):
-   ```bash
-   dotnet ef database update
-   ```
-
-### Frontend Setup
+Copy the example config:
 
 ```bash
-cd frontend
+cp appsettings.Example.json appsettings.json
 ```
 
-1. **Install dependencies:**
-   ```bash
-   npm install
-   ```
+Edit `appsettings.json` and fill in your values:
 
-2. **Start the dev server:**
-   ```bash
-   npm run dev
-   ```
-   The app runs on `http://localhost:5180` by default.
+```json
+{
+  "ConnectionStrings": {
+    "DefaultConnection": "Host=localhost;Port=5432;Database=menu_db;Username=YOUR_USER;Password=YOUR_PASSWORD"
+  },
+  "Jwt": {
+    "Secret": "REPLACE_WITH_A_RANDOM_STRING_AT_LEAST_32_CHARS_LONG"
+  },
+  "Seed": {
+    "SuperAdminPassword": "REPLACE_IN_PRODUCTION"
+  }
+}
+```
 
-3. **Build for production:**
-   ```bash
-   npm run build
-   ```
+> **Tip:** Use `dotnet user-secrets` to avoid committing secrets:
+> ```bash
+> dotnet user-secrets set "Jwt:Secret" "your-secret-here"
+> ```
 
-### Frontend Scripts
+Run migrations and start the API:
 
-| Script | Description |
-|---|---|
-| `npm run dev` | Start Vite dev server |
-| `npm run build` | Type-check and production build |
-| `npm run lint` | Run Oxlint |
-| `npm run preview` | Preview production build |
+```bash
+dotnet ef database update
+dotnet run
+```
+
+The API will be available at `https://localhost:5001` (or the port shown in your terminal).
+Swagger UI: `https://localhost:5001/swagger`
 
 ---
 
-## Configuration Reference
+### 3. Frontend Setup
 
-### Backend (`appsettings.json`)
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+The dev server will start at `http://localhost:5173`.
+
+---
+
+## Routes
+
+| Path | Access | Description |
+|---|---|---|
+| `/login` | Public | Login page |
+| `/restaurant/:id/menu` | Public | Customer-facing menu (QR landing page) |
+| `/admin` | SuperAdmin | Super-admin dashboard |
+| `/restro-admin` | RestroAdmin | Restaurant admin dashboard |
+| `/restaurant/:id/manage` | RestroAdmin, SuperAdmin | Menu Studio (drag-and-drop editor) |
+| `/restro-admin/ocr` | SuperAdmin | OCR ingestion dashboard |
+| `/restaurant/:id/category/:name` | SuperAdmin | JSON paste screen (OCR workflow) |
+| `/restaurant/:id/review` | SuperAdmin | Full menu review and edit |
+| `/chef` | Chef | Kitchen view |
+| `/waiter` | Waiter | Front-of-house view |
+
+---
+
+## Roles
+
+| Role | Permissions |
+|---|---|
+| `SuperAdmin` | Full access to all restaurants, OCR ingestion, admin panel |
+| `RestroAdmin` | Manage their own restaurant's menu, items, and staff |
+| `Chef` | View incoming orders in the kitchen dashboard |
+| `Waiter` | Take and manage table orders |
+
+---
+
+## Environment and Configuration
 
 | Key | Description |
 |---|---|
 | `ConnectionStrings:DefaultConnection` | PostgreSQL connection string |
-| `Jwt:Secret` | HMAC-SHA256 signing key (32+ chars) |
-| `Seed:SuperAdminPassword` | Initial super-admin password set on first seed |
-| `Redis:ConnectionString` | Redis host (e.g. `localhost:6379`) |
-| `Redis:InstanceName` | Key prefix for Redis entries |
-| `Storage:S3:*` | S3-compatible storage credentials (Supabase/AWS) |
+| `Jwt:Secret` | HS256 signing secret (min 32 chars) |
+| `Seed:SuperAdminPassword` | Initial super-admin password (seeded on first run) |
+| `Redis:ConnectionString` | Redis connection string (default: `localhost:6379`) |
+| `Redis:InstanceName` | Redis key prefix (default: `optionc:`) |
 
-### Environment Variables (Production)
+---
 
-Override any setting using double-underscore (`__`) as the separator:
+## Scripts
 
-```bash
-export ConnectionStrings__DefaultConnection="..."
-export Jwt__Secret="..."
-export Redis__ConnectionString="redis-host:6379"
+### Frontend
+
+| Command | Description |
+|---|---|
+| `npm run dev` | Start the Vite dev server |
+| `npm run build` | Type-check and build for production |
+| `npm run preview` | Preview the production build |
+| `npm run lint` | Run oxlint |
+
+### Backend
+
+| Command | Description |
+|---|---|
+| `dotnet run` | Start the API |
+| `dotnet ef database update` | Apply pending migrations |
+| `dotnet ef migrations add <Name>` | Create a new migration |
+
+---
+
+## Project Structure
+
 ```
+frontend/src/
+├── components/        # Shared and feature components (dashboard, editor, paste, etc.)
+├── pages/             # Route-level pages (admin, chef, customer, waiter, auth)
+├── store/             # Zustand stores
+├── services/          # API service layer (axios)
+├── hooks/             # Custom React hooks
+├── types/             # TypeScript type definitions
+├── utils/             # Helper utilities
+└── lib/               # Third-party library wrappers
 
----
-
-## Key Backend Services
-
-| Service | Description |
-|---|---|
-| `JsonValidator` | Validates pasted OCR JSON against the menu schema |
-| `DeduplicationService` | Merges duplicate items across categories |
-| `EngineCacheService` | Singleton in-memory snapshot of the normalization engine |
-| `NormalizationEngineService` | Matches food images through the 3-phase funnel |
-| `SuggestorService` | Suggests food item names from the known name database |
-| `CacheService` | Typed cache-aside pattern over Redis |
-| `AlertPublisher` | Redis pub/sub publisher for real-time waiter alerts |
-| `S3StorageService` | Upload/delete images to S3-compatible storage |
-| `ErrorReportFormatter` | Formats validation errors into human-readable reports |
-
----
-
-## Tech Stack Summary
-
-| | Technology |
-|---|---|
-| **Backend** | ASP.NET Core 8, EF Core, PostgreSQL, Redis, JWT, Serilog, Swagger |
-| **Frontend** | React 19, TypeScript, Vite, TailwindCSS, Zustand, TanStack Query, dnd-kit |
-| **Storage** | Supabase S3-compatible object storage |
-| **Auth** | JWT Bearer tokens with role-based access control |
+backend/
+├── Controllers/       # API controllers
+├── Services/          # Business logic (OCR engine, cache, storage, etc.)
+├── Models/            # EF Core entity models
+├── DTOs/              # Request/response data transfer objects
+├── Data/              # DbContext and migrations
+└── Seed/              # Database seeding logic
+```
 
 ---
 
