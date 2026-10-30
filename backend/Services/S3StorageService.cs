@@ -18,15 +18,14 @@ public class S3StorageService : IImageStorageService
     {
         _logger = logger;
 
-        var serviceUrl = config["Storage:S3:ServiceUrl"] ?? "https://monroaasdcesxkiagabs.storage.supabase.co/storage/v1/s3";
+        var serviceUrl = Required(config, "Storage:S3:ServiceUrl");
         if (!serviceUrl.EndsWith("/")) serviceUrl += "/";
 
-        var accessKey = config["Storage:S3:AccessKeyId"] ?? "c967e9ce05763304187ea963adf9dbd0";
-        var secretKey = config["Storage:S3:SecretAccessKey"] ?? "8fa6b544b9d11785509cb25d0ed5d846b413b8bd2ba26ee48a6c4a9ac0e67d60";
+        var accessKey = Required(config, "Storage:S3:AccessKeyId");
+        var secretKey = Required(config, "Storage:S3:SecretAccessKey");
         _bucket = config["Storage:S3:Bucket"] ?? "food-images";
 
-        var projectRef = "monroaasdcesxkiagabs";
-        _publicBaseUrl = (config["Storage:S3:PublicBaseUrl"] ?? $"https://{projectRef}.supabase.co/storage/v1/object/public/{_bucket}").TrimEnd('/');
+        _publicBaseUrl = Required(config, "Storage:S3:PublicBaseUrl").TrimEnd('/');
 
         try
         {
@@ -42,6 +41,13 @@ public class S3StorageService : IImageStorageService
         {
             _logger.LogWarning(ex, "Failed to initialize AmazonS3Client, local fallback active.");
         }
+    }
+
+    private static string Required(IConfiguration config, string key)
+    {
+        var value = config[key];
+        return !string.IsNullOrWhiteSpace(value) && !value.StartsWith("REPLACE_")
+            ? value : throw new InvalidOperationException($"{key} is not configured.");
     }
 
     public async Task<string> UploadAsync(Stream stream, string storagePath, string contentType, CancellationToken ct = default)

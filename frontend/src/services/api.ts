@@ -1,5 +1,6 @@
 import axios from "axios";
 import type { JsonValidationResult } from "@/types";
+import { useAuthStore } from "@/store/useAuthStore";
 
 const api = axios.create({
   baseURL: "/api/menu",
@@ -7,12 +8,21 @@ const api = axios.create({
   headers: { "Content-Type": "application/json" },
 });
 
+api.interceptors.request.use((config) => {
+  const token = useAuthStore.getState().token;
+  if (token) config.headers.Authorization = `Bearer ${token}`;
+  return config;
+});
+
 // Unwrap backend error messages so TanStack Query gets a clean Error instance.
 api.interceptors.response.use(
   (res) => res,
   (err) => {
     const message = err.response?.data?.message ?? err.message ?? "Network error";
-    return Promise.reject(new Error(message));
+    if (err.response?.status === 401) useAuthStore.getState().logout();
+    // Retain status and field errors for callers that need to distinguish failures.
+    err.message = message;
+    return Promise.reject(err);
   }
 );
 

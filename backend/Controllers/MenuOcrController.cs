@@ -1,3 +1,5 @@
+using Microsoft.AspNetCore.Authorization;
+using MenuOcrEngine.Security;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json;
@@ -25,6 +27,8 @@ namespace MenuOcrEngine.Controllers;
 [ApiController]
 [Route("api/menu")]
 [Produces("application/json")]
+[Authorize(Roles = "SuperAdmin,RestroAdmin")]
+[ServiceFilter(typeof(MenuAccessFilter))]
 public class MenuOcrController : ControllerBase
 {
     private readonly AppDbContext _db;
@@ -69,6 +73,7 @@ public class MenuOcrController : ControllerBase
     /// </summary>
     /// <param name="request">JSON string + expected category name.</param>
     [HttpPost("validate-json")]
+    [Authorize(Roles = "SuperAdmin")]
     [ProducesResponseType(typeof(JsonValidationResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public IActionResult ValidateJson([FromBody] JsonValidationRequest request)
@@ -102,6 +107,7 @@ public class MenuOcrController : ControllerBase
     /// </summary>
     /// <param name="request">JSON, category name, restaurant ID, correction round.</param>
     [HttpPost("save-category")]
+    [Authorize(Roles = "SuperAdmin")]
     [ProducesResponseType(typeof(SaveCategoryResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(SaveCategoryResponse), StatusCodes.Status422UnprocessableEntity)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -199,10 +205,14 @@ public class MenuOcrController : ControllerBase
     /// </summary>
     /// <param name="restaurantId">Page number / restaurant identifier.</param>
     [HttpPost("build-menu/{restaurantId:guid}")]
+    [AllowAnonymous]
     [ProducesResponseType(typeof(BuildMenuResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> BuildMenu(Guid restaurantId)
     {
+        // Check before cache access so suspended/deleted restaurants disappear immediately.
+        if (!await _db.Restaurants.AnyAsync(r => r.Id == restaurantId && r.Status == "Active", HttpContext.RequestAborted))
+            return NotFound(new { message = "Restaurant not found or inactive." });
         _logger.LogInformation("BuildMenu called for restaurantId={RestaurantId}", restaurantId);
 
         // Try cache first — avoids the deep EF include on every QR scan.
@@ -270,25 +280,9 @@ public class MenuOcrController : ControllerBase
     public async Task<IActionResult> UpdateRestaurantSettings(Guid restaurantId, [FromBody] UpdateRestaurantSettingsRequest request)
     {
         var restaurant = await _db.Restaurants.FirstOrDefaultAsync(r => r.Id == restaurantId);
-        if (restaurant == null)
-        {
-            restaurant = new Restaurant
-            {
-                Id = restaurantId,
-                Name = "Restaurant",
-                ThemeId = request.ThemeId ?? "default",
-                BannerUrl = request.BannerUrl,
-            };
-            _db.Restaurants.Add(restaurant);
-        }
-        else
-        {
-            if (!string.IsNullOrWhiteSpace(request.ThemeId))
-                restaurant.ThemeId = request.ThemeId;
-
-            if (request.BannerUrl != null)
-                restaurant.BannerUrl = request.BannerUrl;
-        }
+        if (restaurant == null) return NotFound(new { message = "Restaurant not found." });
+        if (!string.IsNullOrWhiteSpace(request.ThemeId)) restaurant.ThemeId = request.ThemeId;
+        if (request.BannerUrl != null) restaurant.BannerUrl = request.BannerUrl;
 
         await _db.SaveChangesAsync();
 
@@ -486,6 +480,7 @@ public class MenuOcrController : ControllerBase
     /// </summary>
     /// <param name="request">Category name + error list.</param>
     [HttpPost("format-errors")]
+    [Authorize(Roles = "SuperAdmin")]
     [ProducesResponseType(typeof(FormatErrorsResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public IActionResult FormatErrors([FromBody] FormatErrorsRequest request)

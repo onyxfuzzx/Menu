@@ -27,6 +27,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Content Update="appsettings.Local.json" CopyToOutputDirectory="Never" CopyToPublishDirectory="Never" />
     <Content Update="Seed\*.json" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="Seed\*.txt" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>

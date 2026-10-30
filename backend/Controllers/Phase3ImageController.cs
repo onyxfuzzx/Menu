@@ -12,6 +12,7 @@ using Microsoft.EntityFrameworkCore;
 namespace MenuOcrEngine.Controllers;
 
 [ApiController]
+[Authorize(Roles = "SuperAdmin")]
 [Route("api/phase3")]
 public class Phase3ImageController : ControllerBase
 {

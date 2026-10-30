@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
+import { toast } from 'sonner';
 import { buildMenu, updateRestaurantSettings } from '@/services/api';
 import { useAuthStore } from '@/store/useAuthStore';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -34,17 +35,11 @@ export default function MenuManagerPage() {
     enabled: !!restaurantId,
   });
 
-  const localThemeId = useMemo(() => getSavedThemeId(restaurantId ?? ''), [restaurantId]);
-
   useEffect(() => {
     if (!restaurantId || !menuData) return;
-    if (menuData.themeId && menuData.themeId !== 'default') {
-      setSelectedThemeId(menuData.themeId);
-      setSavedThemeId(restaurantId, menuData.themeId);
-    } else if (localThemeId && localThemeId !== 'default') {
-      updateRestaurantSettings(restaurantId, { themeId: localThemeId }).catch(console.error);
-    }
-  }, [menuData, restaurantId, localThemeId]);
+    setSelectedThemeId(menuData.themeId ?? 'default');
+    setSavedThemeId(restaurantId, menuData.themeId ?? 'default');
+  }, [menuData, restaurantId]);
 
   const categories = menuData?.categories || [];
   const allItems = useMemo(() => {
@@ -71,15 +66,18 @@ export default function MenuManagerPage() {
     };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const handleSelectTheme = useCallback((id: string) => {
-    setSelectedThemeId(id);
-    if (restaurantId) {
+  const handleSelectTheme = useCallback(async (id: string) => {
+    if (!restaurantId) return;
+    try {
+      await updateRestaurantSettings(restaurantId, { themeId: id });
+      setSelectedThemeId(id);
       setSavedThemeId(restaurantId, id);
-      updateRestaurantSettings(restaurantId, { themeId: id }).catch(console.error);
+      if (savedToastTimer.current) clearTimeout(savedToastTimer.current);
+      setShowSavedToast(true);
+      savedToastTimer.current = setTimeout(() => setShowSavedToast(false), 1500);
+    } catch {
+      toast.error('Theme could not be saved. Please try again.');
     }
-    if (savedToastTimer.current) clearTimeout(savedToastTimer.current);
-    setShowSavedToast(true);
-    savedToastTimer.current = setTimeout(() => setShowSavedToast(false), 1500);
   }, [restaurantId]);
 
   const menuUrl = `${window.location.origin}/restaurant/${restaurantId}/menu`;

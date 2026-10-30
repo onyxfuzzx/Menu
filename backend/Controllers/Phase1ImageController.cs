@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using MenuOcrEngine.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -5,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 namespace MenuOcrEngine.Controllers;
 
 [ApiController]
+[Authorize(Roles = "SuperAdmin")]
 [Route("api/phase1")]
 public class Phase1ImageController : ControllerBase
 {

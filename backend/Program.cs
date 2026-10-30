@@ -1,11 +1,9 @@
+using MenuOcrEngine.Security;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 using MenuOcrEngine.Data;
 using MenuOcrEngine.Services;
 using MenuOcrEngine.Seed;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.IdentityModel.Tokens;
-using System.Text;
 using Serilog;
 using StackExchange.Redis;
 
@@ -25,6 +23,11 @@ try
     Log.Information("Starting Menu OCR Engine API (Option-C)");
 
     var builder = WebApplication.CreateBuilder(args);
+    // Local credentials are intentionally excluded from source control.
+    builder.Configuration.AddJsonFile("appsettings.Local.json", optional: true, reloadOnChange: false);
+    if (builder.Environment.IsDevelopment()) builder.Configuration.AddUserSecrets<Program>(optional: true);
+    builder.Configuration.AddEnvironmentVariables();
+    builder.Configuration.AddCommandLine(args);
 
     // ═══════════════════════════════════════════════════════════════
     // SERILOG
@@ -147,38 +150,23 @@ try
     // ═══════════════════════════════════════════════════════════════
     // AUTHENTICATION & AUTHORIZATION
     // ═══════════════════════════════════════════════════════════════
-    // The JWT secret MUST come from configuration (env var Jwt__Secret,
-    // user-secrets, or appsettings). A weak dev-only fallback is allowed
-    // ONLY outside Production so local runs work without setup.
-    var jwtSecret = builder.Configuration["Jwt:Secret"];
-    if (string.IsNullOrWhiteSpace(jwtSecret))
-    {
-        if (builder.Environment.IsProduction())
-            throw new InvalidOperationException("Jwt:Secret is not configured. Set the Jwt__Secret environment variable.");
-        jwtSecret = "dev_only_insecure_jwt_secret_key_change_me_1234567890";
-        Log.Warning("Jwt:Secret not configured — using an insecure development fallback. DO NOT use in production.");
-    }
-    if (jwtSecret.Length < 32)
-        throw new InvalidOperationException("Jwt:Secret must be at least 32 characters for HMAC-SHA256.");
-    builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-        .AddJwtBearer(options =>
-        {
-            options.RequireHttpsMetadata = false;
-            options.SaveToken = true;
-            options.TokenValidationParameters = new TokenValidationParameters
-            {
-                ValidateIssuerSigningKey = true,
-                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret)),
-                ValidateIssuer = false,
-                ValidateAudience = false
-            };
-        });
-    builder.Services.AddAuthorization();
+    builder.Services.AddMenuSecurity(builder.Configuration["Jwt:Secret"]);
 
     // ═══════════════════════════════════════════════════════════════
     // BUILD APP
     // ═══════════════════════════════════════════════════════════════
     var app = builder.Build();
+
+    // Explicit additive seed command: no migrations, resets, staff creation or server startup.
+    if (builder.Configuration.GetValue<bool>("seed-zaika"))
+    {
+        await using var seedScope = app.Services.CreateAsyncScope();
+        await ZaikaMenuSeeder.SeedAsync(
+            seedScope.ServiceProvider.GetRequiredService<AppDbContext>(),
+            seedScope.ServiceProvider.GetRequiredService<ICacheService>(),
+            seedScope.ServiceProvider.GetRequiredService<ILoggerFactory>().CreateLogger("ZaikaMenuSeeder"));
+        return;
+    }
 
     // ═══════════════════════════════════════════════════════════════
     // MIDDLEWARE PIPELINE
@@ -196,6 +184,7 @@ try
     app.UseSerilogRequestLogging();
     app.UseCors();
     app.UseAuthentication();
+    app.UseRateLimiter();
     app.UseAuthorization();
     app.MapControllers();
 
@@ -249,6 +238,7 @@ catch (HostAbortedException)
 }
 catch (Exception ex)
 {
+    Environment.ExitCode = 1;
     Log.Fatal(ex, "Application terminated unexpectedly");
 }
 finally

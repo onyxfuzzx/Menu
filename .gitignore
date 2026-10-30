@@ -16,3 +16,5 @@ obj/
 # OS Files
 .DS_Store
 Thumbs.db
+# Private backend overrides
+backend/appsettings.Local.json

@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.RateLimiting;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -138,6 +139,7 @@ public class AlertsController : ControllerBase
     /// <summary>Public endpoint: a customer at a table raises a "Call Waiter" alert.</summary>
     [HttpPost("call-waiter")]
     [AllowAnonymous]
+    [EnableRateLimiting("waiter-call")]
     public async Task<IActionResult> CallWaiter([FromBody] CallWaiterRequest request)
     {
         if (request.RestaurantId == Guid.Empty)
@@ -145,7 +147,7 @@ public class AlertsController : ControllerBase
         if (string.IsNullOrWhiteSpace(request.TableNumber))
             return BadRequest(new { message = "Table number is required." });
 
-        var restaurantExists = await _context.Restaurants.AnyAsync(r => r.Id == request.RestaurantId);
+        var restaurantExists = await _context.Restaurants.AnyAsync(r => r.Id == request.RestaurantId && r.Status == "Active");
         if (!restaurantExists) return NotFound(new { message = "Restaurant not found." });
 
         var table = request.TableNumber.Trim();

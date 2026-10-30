@@ -31,7 +31,9 @@ funnelApi.interceptors.response.use(
       err.response?.data?.message ??
       err.message ??
       "Network error";
-    return Promise.reject(new Error(message));
+    if (err.response?.status === 401) useAuthStore.getState().logout();
+    err.message = message;
+    return Promise.reject(err);
   }
 );
 

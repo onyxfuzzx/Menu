@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using MenuOcrEngine.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -9,6 +10,7 @@ namespace MenuOcrEngine.Controllers;
 /// to a Phase 1 category keyword or the absolute fallback, grouped by name and ranked by frequency.
 /// </summary>
 [ApiController]
+[Authorize(Roles = "SuperAdmin")]
 [Route("api/unmatched")]
 public class UnmatchedLogController : ControllerBase
 {

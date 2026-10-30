@@ -1,3 +1,5 @@
+using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.AspNetCore.Authorization;
 using MenuOcrEngine.DTOs;
 using MenuOcrEngine.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -9,6 +11,7 @@ namespace MenuOcrEngine.Controllers;
 /// Called by the customer menu page to resolve food item images.
 /// </summary>
 [ApiController]
+[AllowAnonymous]
 [Route("api/normalize-image")]
 public class NormalizeImageController : ControllerBase
 {
@@ -17,6 +20,7 @@ public class NormalizeImageController : ControllerBase
     public NormalizeImageController(NormalizationEngineService engine) => _engine = engine;
 
     [HttpGet]
+    [EnableRateLimiting("normalization")]
     public ActionResult<NormalizeImageResponse> Get(
         [FromQuery] string? itemName,
         [FromQuery] string? categoryName)

@@ -1,10 +1,10 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { buildMenu, updateRestaurantSettings } from '@/services/api';
+import { buildMenu } from '@/services/api';
 import { Menu as MenuIcon, Home, ShoppingCart, Info, ArrowUp } from 'lucide-react';
 
-import { getSavedThemeId, setSavedThemeId, getSavedBanner, setSavedBanner, DEFAULT_BANNER, THEMES, applyThemeVarsToElement } from '@/utils/themeConfig';
+import { getSavedThemeId, setSavedThemeId, setSavedBanner, THEMES, applyThemeVarsToElement } from '@/utils/themeConfig';
 import CustomerHero from './components/CustomerHero';
 import CustomerSearchBar from './components/CustomerSearchBar';
 import CustomerBestSellers from './components/CustomerBestSellers';
@@ -74,7 +74,7 @@ export default function CustomerMenuPage() {
 
   const localThemeId = useMemo(() => getSavedThemeId(restaurantId ?? ''), [restaurantId]);
   const dbThemeId = data?.themeId;
-  const themeId = (dbThemeId && dbThemeId !== 'default') ? dbThemeId : (localThemeId || 'default');
+  const themeId = dbThemeId ?? localThemeId ?? 'default';
   const theme = useMemo(() => THEMES.find(t => t.id === themeId) || THEMES[0], [themeId]);
   const v = theme.vars;
 
@@ -85,21 +85,9 @@ export default function CustomerMenuPage() {
   useEffect(() => {
     if (!restaurantId || !data) return;
 
-    if (data.themeId && data.themeId !== 'default') {
-      setSavedThemeId(restaurantId, data.themeId);
-    } else if (localThemeId && localThemeId !== 'default') {
-      updateRestaurantSettings(restaurantId, { themeId: localThemeId }).catch(console.error);
-    }
-
-    if (data.bannerUrl) {
-      setSavedBanner(restaurantId, data.bannerUrl);
-    } else {
-      const localBanner = getSavedBanner(restaurantId);
-      if (localBanner && localBanner !== DEFAULT_BANNER) {
-        updateRestaurantSettings(restaurantId, { bannerUrl: localBanner }).catch(console.error);
-      }
-    }
-  }, [data, restaurantId, localThemeId]);
+    setSavedThemeId(restaurantId, data.themeId ?? 'default');
+    setSavedBanner(restaurantId, data.bannerUrl ?? '');
+  }, [data, restaurantId]);
 
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState<'veg' | 'nonveg' | 'bestseller' | null>(null);

@@ -1,3 +1,6 @@
+using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.AspNetCore.Authorization;
+using MenuOcrEngine.Security;
 using System;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
@@ -48,6 +51,8 @@ public class AuthController : ControllerBase
     }
 
     [HttpPost("login")]
+    [AllowAnonymous]
+    [EnableRateLimiting("login")]
     public async Task<IActionResult> Login([FromBody] LoginRequest request)
     {
         var user = await _context.Users.Include(u => u.Restaurant).FirstOrDefaultAsync(u => u.Email == request.Email);
@@ -56,6 +61,9 @@ public class AuthController : ControllerBase
         {
             return Unauthorized(new { message = "Invalid email or password" });
         }
+
+        if (user.Role != UserRole.SuperAdmin && (user.RestaurantId == null || user.Restaurant?.Status != "Active"))
+            return Unauthorized(new { message = "Restaurant access is unavailable." });
 
         var tokenHandler = new JwtSecurityTokenHandler();
         var secret = _configuration["Jwt:Secret"];
@@ -73,7 +81,8 @@ public class AuthController : ControllerBase
                 new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
                 new Claim(ClaimTypes.Email, user.Email),
                 new Claim(ClaimTypes.Role, user.Role.ToString()),
-                new Claim("RestaurantId", user.RestaurantId?.ToString() ?? "")
+                new Claim("RestaurantId", user.RestaurantId?.ToString() ?? ""),
+                new Claim("CredentialVersion", AccountTokenValidator.CredentialVersion(user.PasswordHash))
             }),
             Expires = DateTime.UtcNow.AddDays(7),
             SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)

@@ -58,6 +58,7 @@ function authHeaders(): Record<string, string> {
 }
 
 async function parseError(res: Response): Promise<never> {
+  if (res.status === 401) useAuthStore.getState().logout();
   let message = `Request failed (${res.status})`;
   try {
     const data = await res.json();

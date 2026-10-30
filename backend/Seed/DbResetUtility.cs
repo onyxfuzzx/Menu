@@ -6,8 +6,10 @@ namespace MenuOcrEngine.Seed;
 
 public static class DbResetUtility
 {
-    public static async Task ResetDatabaseAsync(AppDbContext db, ILogger logger)
+    public static async Task ResetDatabaseAsync(AppDbContext db, ILogger logger, string adminEmail, string adminPassword)
     {
+        if (string.IsNullOrWhiteSpace(adminEmail) || string.IsNullOrWhiteSpace(adminPassword) || adminPassword.Length < 12)
+            throw new ArgumentException("Supply an admin email and a password of at least 12 characters before resetting.");
         logger.LogInformation("Starting complete database reset...");
 
         // Remove all domain rows using EF Core sets to handle table casing automatically
@@ -33,17 +35,17 @@ public static class DbResetUtility
 
         await db.SaveChangesAsync();
 
-        // Seed SuperAdmin zaid@admin.com with password 12345678
+        // Credentials must be supplied explicitly; no shared default account.
         var adminUser = new User
         {
-            Email = "zaid@admin.com",
-            Name = "Zaid (Super Admin)",
-            PasswordHash = BCrypt.Net.BCrypt.HashPassword("12345678"),
+            Email = adminEmail.Trim(),
+            Name = "Super Admin",
+            PasswordHash = BCrypt.Net.BCrypt.HashPassword(adminPassword),
             Role = UserRole.SuperAdmin
         };
         db.Users.Add(adminUser);
         await db.SaveChangesAsync();
 
-        logger.LogInformation("Database reset completed. Only zaid@admin.com user remains.");
+        logger.LogInformation("Database reset completed. The supplied admin account was created.");
     }
 }

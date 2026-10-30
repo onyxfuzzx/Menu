@@ -1,9 +1,11 @@
+using Microsoft.AspNetCore.Authorization;
 using MenuOcrEngine.Services;
 using Microsoft.AspNetCore.Mvc;
 
 namespace MenuOcrEngine.Controllers;
 
 [ApiController]
+[Authorize(Roles = "SuperAdmin")]
 [Route("api/suggestor")]
 public class SuggestorController : ControllerBase
 {

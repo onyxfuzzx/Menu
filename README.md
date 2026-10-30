@@ -60,7 +60,7 @@ Menu/
 ### Prerequisites
 
 - [Node.js](https://nodejs.org/) >= 18
-- [.NET SDK](https://dotnet.microsoft.com/) >= 8
+- [.NET SDK](https://dotnet.microsoft.com/) >= 10
 - [PostgreSQL](https://www.postgresql.org/) running locally or via a cloud provider
 - [Redis](https://redis.io/) running locally or via a cloud provider
 
@@ -84,10 +84,14 @@ cd backend
 Copy the example config:
 
 ```bash
-cp appsettings.Example.json appsettings.json
+Copy-Item appsettings.Example.json appsettings.Local.json
 ```
 
-Edit `appsettings.json` and fill in your values:
+Edit the ignored `appsettings.Local.json` and fill in your values (including `Storage:S3` settings). This local file is excluded from build/publish output. Production deployments should inject environment variables or a secret store. Environment variables override local settings; development user-secrets also override the local file.
+
+Never commit real credentials. Previously exposed credentials must be rotated with the database/storage providers and the JWT signing secret replaced. Existing local values were preserved during the security cleanup; they have not been rotated.
+
+Example configuration:
 
 ```json
 {
@@ -115,8 +119,8 @@ dotnet ef database update
 dotnet run
 ```
 
-The API will be available at `https://localhost:5001` (or the port shown in your terminal).
-Swagger UI: `https://localhost:5001/swagger`
+The API will be available at `http://localhost:5010` (or the port shown in your terminal).
+Swagger UI: `http://localhost:5010/swagger`
 
 ---
 
@@ -128,7 +132,7 @@ npm install
 npm run dev
 ```
 
-The dev server will start at `http://localhost:5173`.
+The dev server will start at `http://localhost:5180`.
 
 ---
 
@@ -220,3 +224,29 @@ backend/
 ## License
 
 This project is private. All rights reserved.
+
+
+## Zaika sample menu
+
+The explicit seed command adds 24 sample dishes across Starters, Main Course, Rice & Biryani, Breads, Desserts and Beverages to the existing Zaika restaurant. It preserves existing items/prices, skips matching dish names on repeat runs, and refuses missing or ambiguous restaurant matches. Sample prices are for testing.
+
+Run from `backend` (the separate build output lets an existing API keep running):
+
+```powershell
+dotnet build --no-restore --output bin/ZaikaSeed -p:UseAppHost=false
+dotnet bin/ZaikaSeed/MenuOcrEngine.dll --seed-zaika=true
+```
+
+This command does not run migrations, reset data, create staff, or start another API server. It uses the configured database and evicts Zaika's menu cache when Redis is available. Refresh the customer menu or Menu Studio after seeding.
+
+## Security regression tests
+
+```powershell
+dotnet test tests/Backend.Tests/Backend.Tests.csproj
+```
+
+These tests use isolated in-memory persistence and ASP.NET TestServer; they do not run application startup migrations or contact configured PostgreSQL, Redis or storage services. They cover protected menu endpoints, role and restaurant boundaries, token revocation after account changes, inactive restaurants (including warm menu caches), and login throttling. PostgreSQL transaction/concurrency tests remain part of the next implementation phase.
+
+All existing users must sign in again after this security update: access tokens now include a credential version and are checked against current account/restaurant state on every authenticated request. Public customer menu reads, waiter calls, login and image normalization remain explicitly anonymous. Menu ingestion and image administration require SuperAdmin; restaurant administrators can edit only their own active restaurant.
+
+Request limits are per process/IP: login 10/minute, waiter calls 20/minute, normalization 60/minute. Configure trusted forwarded headers at the deployment boundary before relying on client IPs behind a reverse proxy; multiple replicas need a shared limiter if cluster-wide limits are required.
