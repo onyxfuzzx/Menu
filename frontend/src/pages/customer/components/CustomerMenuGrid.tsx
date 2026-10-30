@@ -1,4 +1,4 @@
-import { useEffect, MutableRefObject } from 'react';
+import { useEffect, type MutableRefObject } from 'react';
 import { List, Grid2x2, AlignJustify, Plus, Minus, UtensilsCrossed, Flame } from 'lucide-react';
 import { getSavedTheme } from '@/utils/themeConfig';
 import ItemBadgeChips from '@/components/shared/ItemBadgeChips';
@@ -29,7 +29,7 @@ interface Props {
   manualSelectRef: MutableRefObject<boolean>;
 }
 
-export default function CustomerMenuGrid({ restaurantId, items, cart, onAddToCart, onUpdateQty, onOpenModal, viewMode, setViewMode, activeCategory, setActiveCategory, manualSelectRef }: Props) {
+export default function CustomerMenuGrid({ restaurantId, items, cart, onAddToCart, onUpdateQty, onOpenModal, viewMode, setViewMode, activeCategory: _activeCategory, setActiveCategory, manualSelectRef }: Props) {
   const theme = getSavedTheme(restaurantId);
   const v = theme.vars;
 
@@ -141,7 +141,7 @@ export default function CustomerMenuGrid({ restaurantId, items, cart, onAddToCar
   );
 }
 
-function ItemCard({ item, theme, viewMode, cart, onAdd, onUpdate, onOpen }: any) {
+function ItemCard({ item, theme, viewMode, cart, onAdd: _onAdd, onUpdate, onOpen }: any) {
   const v = theme.vars;
   const lineId = `${item.id}-${item.prices[0]?.label || 'default'}`;
   const cartItem = cart.find((c: any) => c.lineId === lineId);

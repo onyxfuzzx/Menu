@@ -13,6 +13,8 @@ const toSyncItem = (i: ExtractedItem) => ({
   description: i.description ?? null,
   notes: i.notes ?? null,
   badges: i.badges ?? [],
+  imageUrl: i.imageUrl ?? null,
+  spiceLevel: i.spiceLevel ?? 0,
   prices: (i.prices ?? []).map((p) => ({
     label: p.label ?? null,
     value: p.value,
@@ -28,6 +30,7 @@ function buildPayload(
   return {
     category: cat.parsedData.category,
     notes: cat.parsedData.notes ?? null,
+    emoji: cat.parsedData.emoji ?? null,
     sortOrder,
     items: cat.parsedData.items.map(toSyncItem),
     subCategories: cat.parsedData.subCategories.map((sc) => ({

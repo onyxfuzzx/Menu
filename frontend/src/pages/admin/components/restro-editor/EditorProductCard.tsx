@@ -1,7 +1,7 @@
 import { Pencil, Flame } from 'lucide-react';
 import { getSavedTheme } from '@/utils/themeConfig';
 import { getBasePrice, getDiscountLabel, fitTextClass } from './editorTypes';
-import type { EditFlatItem, EditPrice } from './editorTypes';
+import type { EditFlatItem } from './editorTypes';
 import type { Dietary } from '@/pages/customer/CustomerMenuPage';
 import ItemBadgeChips from '@/components/shared/ItemBadgeChips';
 

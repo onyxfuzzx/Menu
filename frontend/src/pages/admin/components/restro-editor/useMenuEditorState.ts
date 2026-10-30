@@ -1,17 +1,14 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { syncCategory, deleteCategory as apiDeleteCategory } from '@/services/api';
 import type { SyncCategoryPayload, SyncItemPayload } from '@/services/api';
-import { dietaryFromBadges3, tagBadges, setDietaryBadge } from '@/utils/badges';
+import { dietaryFromBadges3 } from '@/utils/badges';
 import {
-  type EditPrice,
   type EditItem,
-  type EditSubCategory,
   type EditCategory,
   type EditFlatItem,
   type CategoryMeta,
   getCategoryEmoji,
-  IMAGE_POOL,
   FALLBACK_IMAGE,
 } from './editorTypes';
 
@@ -128,12 +125,12 @@ export default function useMenuEditorState(serverCategories: any[]): UseMenuEdit
   }>({ categories: [], dirtyCatIds: new Set() });
 
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
-  const toastTimer = useState<ReturnType<typeof setTimeout> | null>(null);
+  const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const showToast = useCallback((message: string, type: 'success' | 'error') => {
     setToast({ message, type });
-    if (toastTimer[0]) clearTimeout(toastTimer[0]);
-    toastTimer[1] = setTimeout(() => setToast(null), 2500);
+    if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+    toastTimerRef.current = setTimeout(() => setToast(null), 2500);
   }, []);
 
   // Rebuild from server when not dirty

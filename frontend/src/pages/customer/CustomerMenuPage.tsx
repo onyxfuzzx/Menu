@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { buildMenu, updateRestaurantSettings } from '@/services/api';
 import { Menu as MenuIcon, Home, ShoppingCart, Info, ArrowUp } from 'lucide-react';
 
-import { getSavedTheme, getSavedThemeId, setSavedThemeId, getSavedBanner, setSavedBanner, DEFAULT_BANNER, THEMES, applyThemeVarsToElement } from '@/utils/themeConfig';
+import { getSavedThemeId, setSavedThemeId, getSavedBanner, setSavedBanner, DEFAULT_BANNER, THEMES, applyThemeVarsToElement } from '@/utils/themeConfig';
 import CustomerHero from './components/CustomerHero';
 import CustomerSearchBar from './components/CustomerSearchBar';
 import CustomerBestSellers from './components/CustomerBestSellers';
@@ -61,10 +61,6 @@ export interface CartItem extends FlatItem {
 }
 interface CategoryMeta { name: string; emoji: string; notes: string; count: number }
 
-const IMAGE_POOL = [
-  '/images/starters/chicken-tikka.png', '/images/starters/paneer-tikka.png', '/images/starters/fish-fry.png',
-  '/images/breads/butter-naan.png', '/images/rice-biryani/chicken-biryani.png', '/images/main-course/butter-chicken.png',
-];
 const FALLBACK_IMAGE = '/images/starters/chicken-tikka.png';
 
 export default function CustomerMenuPage() {

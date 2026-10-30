@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { Sparkles, Check, Moon, Sun, Palette, LayoutGrid } from 'lucide-react';
 import { THEMES, loadGoogleFont, applyThemeVarsToElement } from '@/utils/themeConfig';
-import type { Theme, ThemeVars } from '@/utils/themeConfig';
+import type { Theme } from '@/utils/themeConfig';
 
 type ThemeCategory = 'all' | 'dark' | 'light' | 'neutral';
 
@@ -14,7 +14,7 @@ interface Props {
   allItems: any[];
 }
 
-export default function ThemeEditorTab({ restaurantId, selectedThemeId, onSelectTheme, menuUrl, allItems }: Props) {
+export default function ThemeEditorTab({ restaurantId, selectedThemeId, onSelectTheme, menuUrl, allItems: _allItems }: Props) {
   const [themeFilter, setThemeFilter] = useState<ThemeCategory>('all');
   const selectedTheme = THEMES.find(t => t.id === selectedThemeId) || THEMES[0];
   const filteredThemes = themeFilter === 'all' ? THEMES : THEMES.filter(t => t.category === themeFilter);
@@ -116,7 +116,7 @@ function PhoneIframePreview({ restaurantId, theme, menuUrl }: { restaurantId: st
           <iframe
             ref={iframeRef}
             key={theme.id}
-            src={`/restaurant/${restaurantId}/menu`}
+            src={menuUrl || `/restaurant/${restaurantId}/menu`}
             className="border-0 absolute top-0 left-1/2"
             style={{
               width: '430px',

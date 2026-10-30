@@ -17,6 +17,8 @@ export interface ExtractedItem {
    *  variants (Boneless), marketing tags (New, Bestseller). Frontend classifies via
    *  classifyBadge() in utils/badges.ts. */
   badges: string[];
+  imageUrl?: string | null;
+  spiceLevel?: number;
   prices: ExtractedPrice[];
 }
 
@@ -27,6 +29,7 @@ export interface ExtractedSubCategory {
 }
 
 export interface ExtractedCategory {
+  emoji?: string | null;
   category: string;
   notes: string | null;
   /** Top-level items (XOR with subCategories). */
@@ -116,6 +119,8 @@ export interface ItemEdit {
   description: string | null;
   notes: string | null;
   badges: string[];
+  imageUrl?: string | null;
+  spiceLevel?: number;
   prices: ItemPriceEdit[];
   sortOrder: number;
 }

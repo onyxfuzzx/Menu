@@ -40,7 +40,6 @@ export default function RestroMenuEditorTab({ restaurantId, categories, isLoadin
     categories: editCategories,
     flatItems,
     categoryMetas,
-    dirtyCatIds,
     isDirty,
     toast,
     showToast,
@@ -119,12 +118,6 @@ export default function RestroMenuEditorTab({ restaurantId, categories, isLoadin
   const editItem = useMemo(
     () => flatItems.find((i) => i.id === editItemId) || null,
     [flatItems, editItemId]
-  );
-
-  // Edit category
-  const editCatMeta = useMemo(
-    () => categoryMetas.find((c) => c.dbId === editCatDbId) || null,
-    [categoryMetas, editCatDbId]
   );
 
   const editCatData = useMemo(

@@ -94,7 +94,7 @@ export default function App() {
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </AnimatePresence>
-    {(import.meta.env.DEV || process.env.NODE_ENV === "development") && <Agentation />}
+    {import.meta.env.DEV && <Agentation />}
     </>
   );
 }

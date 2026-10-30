@@ -1,5 +1,5 @@
 import { Trophy, Star, Pencil } from 'lucide-react';
-import { getSavedTheme } from '@/utils/themeConfig';
+
 import { getBasePrice } from './editorTypes';
 import type { EditFlatItem } from './editorTypes';
 
@@ -11,13 +11,13 @@ interface Props {
 }
 
 export default function EditorBestSellers({
-  restaurantId,
+  restaurantId: _restaurantId,
   items,
   onOpenItem,
   onOpenBestsellerSelector,
 }: Props) {
-  const theme = getSavedTheme(restaurantId);
-  const v = theme.vars;
+
+
   const bestsellers = items.filter((item) => item.bestseller).slice(0, 5);
 
   if (bestsellers.length === 0) {

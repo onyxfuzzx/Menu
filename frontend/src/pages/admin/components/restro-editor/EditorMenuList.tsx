@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { List, Grid2x2, AlignJustify, ChevronDown, ChevronRight, Pencil, UtensilsCrossed } from 'lucide-react';
-import { getSavedTheme } from '@/utils/themeConfig';
+
 import { CategoryIcon } from '@/utils/categoryIcon';
 import { STICKY_OFFSETS } from './editorTypes';
 import type { EditFlatItem, CategoryMeta } from './editorTypes';
@@ -29,8 +29,8 @@ export default function EditorMenuList({
   onEditCategory,
   onEditSubCategory,
 }: Props) {
-  const theme = getSavedTheme(restaurantId);
-  const v = theme.vars;
+
+
   const [collapsedCats, setCollapsedCats] = useState<Set<string>>(new Set());
 
   const toggleCat = (name: string) => {
@@ -43,7 +43,7 @@ export default function EditorMenuList({
   };
 
   // Group items by category → subcategory
-  const grouped: Record<string, Record<string | null, EditFlatItem[]>> = {};
+  const grouped: Record<string, Record<string, EditFlatItem[]>> = {};
   items.forEach((item) => {
     if (!grouped[item.category]) grouped[item.category] = {};
     const sub = item.subCategory || '__null__';

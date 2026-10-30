@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { X, Plus, Trash2, Upload, ImageIcon, Flame } from 'lucide-react';
+import { X, Plus, Trash2, Upload, Flame } from 'lucide-react';
 import type { EditItem, EditPrice } from './editorTypes';
 import { dietaryFromBadges3, setDietaryBadge, tagBadges } from '@/utils/badges';
 import { validateImageFile, compressImageToDataUrl } from '@/lib/helpers';
